@@ -42,12 +42,41 @@ func end(state GameState) {
 	log.Printf("GAME OVER\n\n")
 }
 
+// type of map[string]bool
+type safeMoves map[string]bool
+
+// func checkSafeMoves(moves: safeMoves, move: string) safeMoves {
+// 	return safeMoves[move]
+// }
+
+func updateSafeMoves(moves safeMoves, head Coord, bodyPart Coord) safeMoves {
+	// head is below a body part, don't move up
+	if bodyPart.X == head.X && bodyPart.Y == head.Y+1 {
+		moves["up"] = false
+	}
+	// head is above a body part, don't move down
+	if bodyPart.X == head.X && bodyPart.Y == head.Y-1 {
+		moves["down"] = false
+	}
+
+	// head is left of a body part, don't move left
+	if bodyPart.X == head.X-1 && bodyPart.Y == head.Y {
+		moves["left"] = false
+	}
+
+	// head is right of a body part, don't move right
+	if bodyPart.X == head.X+1 && bodyPart.Y == head.Y {
+		moves["right"] = false
+	}
+	return moves
+}
+
 // move is called on every turn and returns your next move
 // Valid moves are "up", "down", "left", or "right"
 // See https://docs.battlesnake.com/api/example-move for available data
 func move(state GameState) BattlesnakeMoveResponse {
 
-	isMoveSafe := map[string]bool{
+	isMoveSafe := safeMoves{
 		"up":    true,
 		"down":  true,
 		"left":  true,
@@ -75,18 +104,22 @@ func move(state GameState) BattlesnakeMoveResponse {
 	boardWidth := state.Board.Width
 	boardHeight := state.Board.Height
 
+	// if head is at the leftmost edge, don't move left
 	if myHead.X == 0 {
 		isMoveSafe["left"] = false
 	}
 
+	// if head is at the rightmost edge, don't move right
 	if myHead.X == boardWidth-1 {
 		isMoveSafe["right"] = false
 	}
 
+	// if head is at the bottom edge, don't move down
 	if myHead.Y == 0 {
 		isMoveSafe["down"] = false
 	}
 
+	// if head is at the top edge, don't move up
 	if myHead.Y == boardHeight-1 {
 		isMoveSafe["up"] = false
 	}
@@ -95,24 +128,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 	mybody := state.You.Body
 
 	for _, bodyPart := range mybody {
-		// head is below a body part, don't move up
-		if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y+1 {
-			isMoveSafe["up"] = false
-		}
-		// head is above a body part, don't move down
-		if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y-1 {
-			isMoveSafe["down"] = false
-		}
-
-		// head is left of a body part, don't move left
-		if bodyPart.X == myHead.X-1 && bodyPart.Y == myHead.Y {
-			isMoveSafe["left"] = false
-		}
-
-		// head is right of a body part, don't move right
-		if bodyPart.X == myHead.X+1 && bodyPart.Y == myHead.Y {
-			isMoveSafe["right"] = false
-		}
+		updateSafeMoves(isMoveSafe, myHead, bodyPart)
 	}
 
 	// TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
@@ -120,24 +136,7 @@ func move(state GameState) BattlesnakeMoveResponse {
 
 	for _, opponent := range opponents {
 		for _, bodyPart := range opponent.Body {
-			// head is below a body part, don't move up
-			if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y+1 {
-				isMoveSafe["up"] = false
-			}
-			// head is above a body part, don't move down
-			if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y-1 {
-				isMoveSafe["down"] = false
-			}
-
-			// head is left of a body part, don't move left
-			if bodyPart.X == myHead.X-1 && bodyPart.Y == myHead.Y {
-				isMoveSafe["left"] = false
-			}
-
-			// head is right of a body part, don't move right
-			if bodyPart.X == myHead.X+1 && bodyPart.Y == myHead.Y {
-				isMoveSafe["right"] = false
-			}
+			updateSafeMoves(isMoveSafe, myHead, bodyPart)
 		}
 	}
 
