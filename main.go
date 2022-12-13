@@ -14,6 +14,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"math/rand"
 )
 
@@ -40,35 +41,6 @@ func start(state GameState) {
 // end is called when your Battlesnake finishes a game
 func end(state GameState) {
 	log.Printf("GAME OVER\n\n")
-}
-
-// type of map[string]bool
-type safeMoves map[string]bool
-
-// func checkSafeMoves(moves: safeMoves, move: string) safeMoves {
-// 	return safeMoves[move]
-// }
-
-func updateSafeMoves(moves safeMoves, head Coord, bodyPart Coord) safeMoves {
-	// head is below a body part, don't move up
-	if bodyPart.X == head.X && bodyPart.Y == head.Y+1 {
-		moves["up"] = false
-	}
-	// head is above a body part, don't move down
-	if bodyPart.X == head.X && bodyPart.Y == head.Y-1 {
-		moves["down"] = false
-	}
-
-	// head is left of a body part, don't move left
-	if bodyPart.X == head.X-1 && bodyPart.Y == head.Y {
-		moves["left"] = false
-	}
-
-	// head is right of a body part, don't move right
-	if bodyPart.X == head.X+1 && bodyPart.Y == head.Y {
-		moves["right"] = false
-	}
-	return moves
 }
 
 // move is called on every turn and returns your next move
@@ -155,11 +127,42 @@ func move(state GameState) BattlesnakeMoveResponse {
 		return BattlesnakeMoveResponse{Move: "down"}
 	}
 
-	// Choose a random move from the safe ones
-	nextMove := safeMoves[rand.Intn(len(safeMoves))]
-
 	// TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
-	// food := state.Board.Food
+	// declare a mutable variable to hold the next move
+	var nextMove string
+
+	if state.You.Health < 30 {
+		// declare a variable to hold the closest food
+		var closestFood Coord
+		// declare a variable to hold the shortest distance
+		var shortestDistance float64
+		// loop through all the food
+		for _, food := range state.Board.Food {
+			// calculate the distance between the food and the head
+			distance := math.Abs(float64(myHead.X-food.X)) + math.Abs(float64(myHead.Y-food.Y))
+			// if the distance is shorter than the shortest distance
+			if distance < shortestDistance || shortestDistance == 0 {
+				// update the shortest distance
+				shortestDistance = distance
+				// update the closest food
+				closestFood = food
+			}
+		}
+
+		log.Printf("im hungry! grabbing: %v", closestFood)
+
+		if myHead.X < closestFood.X && isMoveSafe["right"] {
+			nextMove = "right"
+		} else if myHead.X > closestFood.X && isMoveSafe["left"] {
+			nextMove = "left"
+		} else if myHead.Y < closestFood.Y && isMoveSafe["up"] {
+			nextMove = "up"
+		} else if myHead.Y > closestFood.Y && isMoveSafe["down"] {
+			nextMove = "down"
+		}
+	} else {
+		nextMove = safeMoves[rand.Intn(len(safeMoves))]
+	}
 
 	log.Printf("MOVE %d: %s\n", state.Turn, nextMove)
 	return BattlesnakeMoveResponse{Move: nextMove}
