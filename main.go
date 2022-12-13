@@ -94,10 +94,31 @@ func move(state GameState) BattlesnakeMoveResponse {
 		isMoveSafe["up"] = false
 	}
 
-	log.Printf("isMoveSafe: %v\n", isMoveSafe)
+	// log.Printf("isMoveSafe: %v\n", isMoveSafe)
 
 	// TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-	// mybody := state.You.Body
+	mybody := state.You.Body
+
+	for _, bodyPart := range mybody {
+		// head is below a body part, don't move up
+		if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y-1 {
+			isMoveSafe["up"] = false
+		}
+		// head is above a body part, don't move down
+		if bodyPart.X == myHead.X && bodyPart.Y == myHead.Y+1 {
+			isMoveSafe["down"] = false
+		}
+
+		// head is left of a body part, don't move left
+		if bodyPart.X == myHead.X-1 && bodyPart.Y == myHead.Y {
+			isMoveSafe["left"] = false
+		}
+
+		// head is right of a body part, don't move right
+		if bodyPart.X == myHead.X+1 && bodyPart.Y == myHead.Y {
+			isMoveSafe["right"] = false
+		}
+	}
 
 	// TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
 	// opponents := state.Board.Snakes
